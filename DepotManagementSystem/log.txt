@@ -1,0 +1,32 @@
+===== Delivered Parcel Details =====
+Customer Name: Harry Johnston
+Parcels:
+Parcel ID: X857, Weight: 6.0kg, Days in Depot: 2, Dimensions: 3x6x9
+Total Fee: $6.6
+====================================
+
+Processed customer: Harry Johnston, Total Fee: $6.6
+===== Delivered Parcel Details =====
+Customer Name: Bob Dawson
+Parcels:
+Parcel ID: X780, Weight: 1.0kg, Days in Depot: 4, Dimensions: 5x2x12
+Total Fee: $7.1
+====================================
+
+Processed customer: Bob Dawson, Total Fee: $7.1
+===== Delivered Parcel Details =====
+Customer Name: Andrew Robertson
+Parcels:
+Parcel ID: X919, Weight: 8.0kg, Days in Depot: 5, Dimensions: 4x7x10
+Total Fee: $8.3
+====================================
+
+Processed customer: Andrew Robertson, Total Fee: $8.3
+===== Delivered Parcel Details =====
+Customer Name: Tony Lawson
+Parcels:
+Parcel ID: X086, Weight: 4.0kg, Days in Depot: 7, Dimensions: 7x1x13
+Total Fee: $8.9
+====================================
+
+Processed customer: Tony Lawson, Total Fee: $8.9
