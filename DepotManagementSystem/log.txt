@@ -30,3 +30,11 @@ Total Fee: $8.9
 ====================================
 
 Processed customer: Tony Lawson, Total Fee: $8.9
+===== Delivered Parcel Details =====
+Customer Name: Santha
+Parcels:
+Parcel ID: X563, Weight: 9.0kg, Days in Depot: 5, Dimensions: 6x4x3
+Total Fee: $8.4
+====================================
+
+Processed customer: Santha, Total Fee: $8.4

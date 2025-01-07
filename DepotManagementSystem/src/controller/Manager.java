@@ -141,11 +141,11 @@ public class Manager {
 
         
         JTextField parcelIDField = new JTextField();
-        JSpinner weightSpinner = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 1000.0, 0.1)); // Initial, Min, Max, Step
-        JSpinner daysSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 365, 1)); // Initial, Min, Max, Step
-        JSpinner lengthSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1)); // Initial, Min, Max, Step
-        JSpinner widthSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1)); // Initial, Min, Max, Step
-        JSpinner heightSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1)); // Initial, Min, Max, Step
+        JSpinner weightSpinner = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 1000.0, 0.1)); 
+        JSpinner daysSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 365, 1)); 
+        JSpinner lengthSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1)); 
+        JSpinner widthSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1)); 
+        JSpinner heightSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1)); 
         JTextField customerNameField = new JTextField();
 
         
