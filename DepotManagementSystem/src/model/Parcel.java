@@ -8,7 +8,7 @@ public class Parcel {
     private int length;
     private int height;
 
-    // Constructor
+    
     public Parcel(String parcelID, double weight, int daysInDepot, int length, int width, int height) {
         this.parcelID = parcelID;
         this.weight = weight;
@@ -18,7 +18,7 @@ public class Parcel {
         this.height = height;
     }
 
-    // Getters and Setters
+    
     public String getParcelID() {
         return parcelID;
     }

@@ -25,7 +25,7 @@ public class Manager {
         log = Log.getInstance();
         worker = new Worker();
 
-        // Load data
+        
         try {
             parcelMap.loadParcelsFromFile("Parcels.csv");
             customerQueue.loadCustomersFromFile("Custs.csv", parcelMap);
@@ -34,7 +34,7 @@ public class Manager {
             JOptionPane.showMessageDialog(null, "Error loading data: " + e.getMessage());
         }
 
-        // Initialize views
+        
         customerView = new CustomerView(customerQueue);
         parcelView = new ParcelView(parcelMap);
     }
@@ -44,12 +44,12 @@ public class Manager {
         frame.setSize(1000, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Layout
+        
         JPanel mainPanel = new JPanel(new GridLayout(1, 2));
         mainPanel.add(parcelView.getPanel());
         mainPanel.add(customerView.getPanel());
 
-        // Buttons
+        
         JButton markAsDoneButton = new JButton("Mark as Done");
         markAsDoneButton.addActionListener(e -> processSelectedCustomer());
 
@@ -76,7 +76,7 @@ public class Manager {
         Customer customer = customerQueue.getCustomerByName(customerName);
 
         if (customer != null) {
-            // Calculate total fee for the customer
+            
             double totalFee = 0;
             StringBuilder parcelDetails = new StringBuilder();
             for (Parcel parcel : customer.getParcels()) {
@@ -90,7 +90,7 @@ public class Manager {
                              .append("\n");
             }
 
-            // Show confirmation dialog
+            
             int choice = JOptionPane.showConfirmDialog(
                     null,
                     "Customer: " + customer.getName() +
@@ -101,7 +101,7 @@ public class Manager {
             );
 
             if (choice == JOptionPane.YES_OPTION) {
-                // Log and process customer
+                
                 for (Parcel parcel : customer.getParcels()) {
                     parcelMap.removeParcel(parcel.getParcelID());
                 }
@@ -111,13 +111,13 @@ public class Manager {
 
                 customerQueue.removeCustomer(customer);
 
-                // Save updated data and refresh views
+                
                 saveAllParcelsToFile();
                 saveAllCustomersToFile();
                 parcelView.refresh();
                 customerView.refresh();
 
-                // Save log to file
+                
                 try {
                     log.saveLogToFile("log.txt");
                 } catch (IOException e) {
@@ -126,7 +126,7 @@ public class Manager {
 
                 JOptionPane.showMessageDialog(null, "Customer and associated parcels removed successfully.");
             }
-            // If "No" is clicked, do nothing.
+            
         } else {
             JOptionPane.showMessageDialog(null, "Selected customer not found.");
         }
@@ -139,7 +139,7 @@ public class Manager {
 
         JPanel panel = new JPanel(new GridLayout(8, 2));
 
-        // Text fields and spinners
+        
         JTextField parcelIDField = new JTextField();
         JSpinner weightSpinner = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 1000.0, 0.1)); // Initial, Min, Max, Step
         JSpinner daysSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 365, 1)); // Initial, Min, Max, Step
@@ -148,7 +148,7 @@ public class Manager {
         JSpinner heightSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1)); // Initial, Min, Max, Step
         JTextField customerNameField = new JTextField();
 
-        // Add components to the panel
+        
         panel.add(new JLabel("Parcel ID:"));
         panel.add(parcelIDField);
 
@@ -173,7 +173,7 @@ public class Manager {
         JButton saveButton = new JButton("Save");
         saveButton.addActionListener(e -> {
             try {
-                // Validate inputs
+                
                 String parcelID = parcelIDField.getText().trim();
                 double weight = (double) weightSpinner.getValue();
                 int daysInDepot = (int) daysSpinner.getValue();
@@ -187,7 +187,7 @@ public class Manager {
                     return;
                 }
 
-                // Create new parcel and customer
+                
                 Parcel newParcel = new Parcel(parcelID, weight, daysInDepot, length, width, height);
                 parcelMap.addParcel(newParcel);
 
@@ -195,7 +195,7 @@ public class Manager {
                 newCustomer.addParcel(newParcel);
                 customerQueue.addCustomer(newCustomer);
 
-                // Save data and refresh views
+                
                 saveAllParcelsToFile();
                 saveAllCustomersToFile();
                 parcelView.refresh();
