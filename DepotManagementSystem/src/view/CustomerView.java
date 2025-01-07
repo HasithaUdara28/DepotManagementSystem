@@ -1,38 +1,47 @@
 package view;
 
-import model.Customer;
-import model.Parcel;
+import model.QueueofCustomers;
 
 import javax.swing.*;
-import java.util.List;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 
 public class CustomerView {
-    private JTextArea outputArea;
+    private QueueofCustomers customerQueue;
+    private JTable customerTable;
+    private DefaultTableModel customerTableModel;
 
-    public CustomerView(JTextArea outputArea) {
-        this.outputArea = outputArea;
+    public CustomerView(QueueofCustomers customerQueue) {
+        this.customerQueue = customerQueue;
+
+        customerTableModel = new DefaultTableModel(new String[]{"Customer Name", "Parcel IDs"}, 0);
+        customerTable = new JTable(customerTableModel);
+        refresh();
     }
 
-    public void displayCustomers(List<Customer> customers) {
-        outputArea.append("Customer List:\n");
-        for (Customer customer : customers) {
-            outputArea.append("Customer: " + customer.getName() + ", Contact: " + customer.getContact() + "\n");
-            outputArea.append("Parcels:\n");
-            for (Parcel parcel : customer.getParcels()) {
-                outputArea.append("   - Parcel ID: " + parcel.getParcelID() + "\n");
-            }
-        }
-        outputArea.append("\n");
+    public JPanel getPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JScrollPane scrollPane = new JScrollPane(customerTable);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Customers"));
+        panel.add(scrollPane, BorderLayout.CENTER);
+        return panel;
     }
 
-    public void displayCustomerDetails(Customer customer) {
-        outputArea.append("Customer Details:\n");
-        outputArea.append("Name: " + customer.getName() + "\n");
-        outputArea.append("Contact: " + customer.getContact() + "\n");
-        outputArea.append("Parcels:\n");
-        for (Parcel parcel : customer.getParcels()) {
-            outputArea.append("   - Parcel ID: " + parcel.getParcelID() + "\n");
+    public void refresh() {
+        customerTableModel.setRowCount(0);
+        customerQueue.getAllCustomers().forEach(customer -> {
+            String parcelIDs = String.join(", ", customer.getParcels().stream()
+                    .map(parcel -> parcel.getParcelID())
+                    .toList());
+            customerTableModel.addRow(new Object[]{customer.getName(), parcelIDs});
+        });
+    }
+
+    public String getSelectedCustomerName() {
+        int selectedRow = customerTable.getSelectedRow();
+        if (selectedRow == -1) {
+            return null;
         }
-        outputArea.append("\n");
+        return (String) customerTableModel.getValueAt(selectedRow, 0);
     }
 }

@@ -1,32 +1,39 @@
 package view;
 
-import model.Parcel;
+import model.ParcelMap;
 
 import javax.swing.*;
-import java.util.List;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 
 public class ParcelView {
-    private JTextArea outputArea;
+    private ParcelMap parcelMap;
+    private JTable parcelTable;
+    private DefaultTableModel parcelTableModel;
 
-    public ParcelView(JTextArea outputArea) {
-        this.outputArea = outputArea;
+    public ParcelView(ParcelMap parcelMap) {
+        this.parcelMap = parcelMap;
+
+        parcelTableModel = new DefaultTableModel(new String[]{"Parcel ID", "Weight", "Days in Depot", "Dimensions (LxWxH)"}, 0);
+        parcelTable = new JTable(parcelTableModel);
+        refresh();
     }
 
-    public void displayParcels(List<Parcel> parcels) {
-        outputArea.append("Parcel List:\n");
-        for (Parcel parcel : parcels) {
-            outputArea.append("Parcel ID: " + parcel.getParcelID() + "\n");
-            outputArea.append("   Weight: " + parcel.getWeight() + " kg\n");
-            outputArea.append("   Dimensions (LxWxH): " + parcel.getLength() + "x" + parcel.getWidth() + "x" + parcel.getHeight() + " cm\n");
-            outputArea.append("   Days in Depot: " + parcel.getDaysInDepot() + "\n\n");
-        }
+    public JPanel getPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JScrollPane scrollPane = new JScrollPane(parcelTable);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Parcels"));
+        panel.add(scrollPane, BorderLayout.CENTER);
+        return panel;
     }
 
-    public void displayParcelDetails(Parcel parcel) {
-        outputArea.append("Parcel Details:\n");
-        outputArea.append("Parcel ID: " + parcel.getParcelID() + "\n");
-        outputArea.append("Weight: " + parcel.getWeight() + " kg\n");
-        outputArea.append("Dimensions (LxWxH): " + parcel.getLength() + "x" + parcel.getWidth() + "x" + parcel.getHeight() + " cm\n");
-        outputArea.append("Days in Depot: " + parcel.getDaysInDepot() + "\n\n");
+    public void refresh() {
+        parcelTableModel.setRowCount(0);
+        parcelMap.getAllParcels().forEach(parcel -> parcelTableModel.addRow(new Object[]{
+                parcel.getParcelID(),
+                parcel.getWeight(),
+                parcel.getDaysInDepot(),
+                parcel.getLength() + "x" + parcel.getWidth() + "x" + parcel.getHeight()
+        }));
     }
 }

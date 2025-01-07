@@ -31,8 +31,9 @@ public class Log {
     }
 
     public void saveLogToFile(String fileName) throws IOException {
-        try (FileWriter writer = new FileWriter(fileName)) {
+        try (FileWriter writer = new FileWriter(fileName, true)) { // Append mode
             writer.write(logBuffer.toString());
+            logBuffer.setLength(0); // Clear the buffer after saving
         }
     }
 }

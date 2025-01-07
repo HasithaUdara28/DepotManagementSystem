@@ -1,11 +1,11 @@
 package controller;
 
 import model.*;
+import view.CustomerView;
+import view.ParcelView;
+
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -16,10 +16,8 @@ public class Manager {
     private Log log;
     private Worker worker;
 
-    private JTable parcelTable;
-    private JTable customerTable;
-    private DefaultTableModel parcelTableModel;
-    private DefaultTableModel customerTableModel;
+    private CustomerView customerView;
+    private ParcelView parcelView;
 
     public Manager() {
         customerQueue = new QueueofCustomers();
@@ -35,6 +33,10 @@ public class Manager {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error loading data: " + e.getMessage());
         }
+
+        // Initialize views
+        customerView = new CustomerView(customerQueue);
+        parcelView = new ParcelView(parcelMap);
     }
 
     public void createGUI() {
@@ -42,47 +44,21 @@ public class Manager {
         frame.setSize(1000, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Parcel Table
-        parcelTableModel = new DefaultTableModel(new String[]{"Parcel ID", "Weight", "Days in Depot", "Dimensions (LxWxH)"}, 0);
-        parcelTable = new JTable(parcelTableModel);
-        loadParcelTable();
-
-        JScrollPane parcelScrollPane = new JScrollPane(parcelTable);
-        parcelScrollPane.setBorder(BorderFactory.createTitledBorder("Parcels"));
-
-        // Customer Table
-        customerTableModel = new DefaultTableModel(new String[]{"Customer Name", "Parcel IDs"}, 0);
-        customerTable = new JTable(customerTableModel);
-        loadCustomerTable();
-
-        JScrollPane customerScrollPane = new JScrollPane(customerTable);
-        customerScrollPane.setBorder(BorderFactory.createTitledBorder("Customers"));
+        // Layout
+        JPanel mainPanel = new JPanel(new GridLayout(1, 2));
+        mainPanel.add(parcelView.getPanel());
+        mainPanel.add(customerView.getPanel());
 
         // Buttons
         JButton markAsDoneButton = new JButton("Mark as Done");
-        markAsDoneButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                processSelectedCustomer();
-            }
-        });
+        markAsDoneButton.addActionListener(e -> processSelectedCustomer());
 
         JButton addButton = new JButton("Add Parcel and Customer");
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                openAddParcelCustomerUI();
-            }
-        });
+        addButton.addActionListener(e -> openAddParcelCustomerUI());
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(markAsDoneButton);
         buttonPanel.add(addButton);
-
-        // Layout
-        JPanel mainPanel = new JPanel(new GridLayout(1, 2));
-        mainPanel.add(parcelScrollPane);
-        mainPanel.add(customerScrollPane);
 
         frame.add(mainPanel, BorderLayout.CENTER);
         frame.add(buttonPanel, BorderLayout.SOUTH);
@@ -90,44 +66,13 @@ public class Manager {
         frame.setVisible(true);
     }
 
-    private void loadParcelTable() {
-        parcelTableModel.setRowCount(0); // Clear existing rows
-        for (Parcel parcel : parcelMap.getAllParcels()) {
-            parcelTableModel.addRow(new Object[]{
-                    parcel.getParcelID(),
-                    parcel.getWeight(),
-                    parcel.getDaysInDepot(),
-                    parcel.getLength() + "x" + parcel.getWidth() + "x" + parcel.getHeight() // Dimensions
-            });
-        }
-    }
-
-    private void loadCustomerTable() {
-        customerTableModel.setRowCount(0); // Clear existing rows
-        for (Customer customer : customerQueue.getAllCustomers()) {
-            StringBuilder parcelIDs = new StringBuilder();
-            for (Parcel parcel : customer.getParcels()) {
-                if (parcelIDs.length() > 0) {
-                    parcelIDs.append(", ");
-                }
-                parcelIDs.append(parcel.getParcelID());
-            }
-            customerTableModel.addRow(new Object[]{
-                    customer.getName(),
-                    parcelIDs.toString()
-            });
-        }
-    }
-
     private void processSelectedCustomer() {
-        int selectedRow = customerTable.getSelectedRow();
-        if (selectedRow == -1) {
+        String customerName = customerView.getSelectedCustomerName();
+        if (customerName == null) {
             JOptionPane.showMessageDialog(null, "Please select a customer to process.");
             return;
         }
 
-        // Retrieve selected customer
-        String customerName = (String) customerTableModel.getValueAt(selectedRow, 0);
         Customer customer = customerQueue.getCustomerByName(customerName);
 
         if (customer != null) {
@@ -137,122 +82,129 @@ public class Manager {
             for (Parcel parcel : customer.getParcels()) {
                 totalFee += worker.calculateFee(parcel);
 
-                // Add parcel details to log entry
                 parcelDetails.append("Parcel ID: ").append(parcel.getParcelID())
                              .append(", Weight: ").append(parcel.getWeight())
                              .append("kg, Days in Depot: ").append(parcel.getDaysInDepot())
                              .append(", Dimensions: ").append(parcel.getLength()).append("x")
                              .append(parcel.getWidth()).append("x").append(parcel.getHeight())
                              .append("\n");
-
-                // Remove the parcel from ParcelMap
-                parcelMap.removeParcel(parcel.getParcelID());
             }
 
-            // Log the delivery details
-            log.logDeliveredParcelDetails(customer, parcelDetails.toString(), totalFee);
+            // Show confirmation dialog
+            int choice = JOptionPane.showConfirmDialog(
+                    null,
+                    "Customer: " + customer.getName() +
+                            "\nTotal Fee: $" + totalFee +
+                            "\n\nDo you want to mark this customer as done?",
+                    "Confirm Mark as Done",
+                    JOptionPane.YES_NO_OPTION
+            );
 
-            // Log event and remove the customer
-            log.addEvent("Processed customer: " + customer.getName() + ", Total Fee: $" + totalFee);
-            customerQueue.removeCustomer(customer);
+            if (choice == JOptionPane.YES_OPTION) {
+                // Log and process customer
+                for (Parcel parcel : customer.getParcels()) {
+                    parcelMap.removeParcel(parcel.getParcelID());
+                }
 
-            // Save updated state to CSV files
-            saveAllParcelsToFile();
-            saveAllCustomersToFile();
+                log.logDeliveredParcelDetails(customer, parcelDetails.toString(), totalFee);
+                log.addEvent("Processed customer: " + customer.getName() + ", Total Fee: $" + totalFee);
 
-            // Refresh tables
-            loadParcelTable();
-            loadCustomerTable();
+                customerQueue.removeCustomer(customer);
 
-            // Save log to file after processing
-            try {
-                log.saveLogToFile("log.txt");
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(null, "Error saving log to file: " + e.getMessage());
+                // Save updated data and refresh views
+                saveAllParcelsToFile();
+                saveAllCustomersToFile();
+                parcelView.refresh();
+                customerView.refresh();
+
+                // Save log to file
+                try {
+                    log.saveLogToFile("log.txt");
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(null, "Error saving log to file: " + e.getMessage());
+                }
+
+                JOptionPane.showMessageDialog(null, "Customer and associated parcels removed successfully.");
             }
-
-            JOptionPane.showMessageDialog(null, "Customer and associated parcels removed successfully. Total Fee: $" + totalFee);
+            // If "No" is clicked, do nothing.
         } else {
             JOptionPane.showMessageDialog(null, "Selected customer not found.");
         }
     }
+
 
     private void openAddParcelCustomerUI() {
         JFrame addFrame = new JFrame("Add Parcel and Customer");
         addFrame.setSize(400, 400);
 
         JPanel panel = new JPanel(new GridLayout(8, 2));
-        panel.add(new JLabel("Parcel ID:"));
+
+        // Text fields and spinners
         JTextField parcelIDField = new JTextField();
+        JSpinner weightSpinner = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 1000.0, 0.1)); // Initial, Min, Max, Step
+        JSpinner daysSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 365, 1)); // Initial, Min, Max, Step
+        JSpinner lengthSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1)); // Initial, Min, Max, Step
+        JSpinner widthSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1)); // Initial, Min, Max, Step
+        JSpinner heightSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1)); // Initial, Min, Max, Step
+        JTextField customerNameField = new JTextField();
+
+        // Add components to the panel
+        panel.add(new JLabel("Parcel ID:"));
         panel.add(parcelIDField);
 
         panel.add(new JLabel("Weight (kg):"));
-        JTextField weightField = new JTextField();
-        panel.add(weightField);
+        panel.add(weightSpinner);
 
         panel.add(new JLabel("Days in Depot:"));
-        JTextField daysField = new JTextField();
-        panel.add(daysField);
+        panel.add(daysSpinner);
 
         panel.add(new JLabel("Length (cm):"));
-        JTextField lengthField = new JTextField();
-        panel.add(lengthField);
+        panel.add(lengthSpinner);
 
         panel.add(new JLabel("Width (cm):"));
-        JTextField widthField = new JTextField();
-        panel.add(widthField);
+        panel.add(widthSpinner);
 
         panel.add(new JLabel("Height (cm):"));
-        JTextField heightField = new JTextField();
-        panel.add(heightField);
+        panel.add(heightSpinner);
 
         panel.add(new JLabel("Customer Name:"));
-        JTextField customerNameField = new JTextField();
         panel.add(customerNameField);
 
         JButton saveButton = new JButton("Save");
-        saveButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    // Get input data
-                    String parcelID = parcelIDField.getText().trim();
-                    double weight = Double.parseDouble(weightField.getText().trim());
-                    int daysInDepot = Integer.parseInt(daysField.getText().trim());
-                    int length = Integer.parseInt(lengthField.getText().trim());
-                    int width = Integer.parseInt(widthField.getText().trim());
-                    int height = Integer.parseInt(heightField.getText().trim());
-                    String customerName = customerNameField.getText().trim();
+        saveButton.addActionListener(e -> {
+            try {
+                // Validate inputs
+                String parcelID = parcelIDField.getText().trim();
+                double weight = (double) weightSpinner.getValue();
+                int daysInDepot = (int) daysSpinner.getValue();
+                int length = (int) lengthSpinner.getValue();
+                int width = (int) widthSpinner.getValue();
+                int height = (int) heightSpinner.getValue();
+                String customerName = customerNameField.getText().trim();
 
-                    // Validate inputs
-                    if (parcelID.isEmpty() || customerName.isEmpty()) {
-                        JOptionPane.showMessageDialog(null, "Parcel ID and Customer Name cannot be empty.");
-                        return;
-                    }
-
-                    // Create new parcel and customer
-                    Parcel newParcel = new Parcel(parcelID, weight, daysInDepot, length, width, height);
-                    parcelMap.addParcel(newParcel);
-
-                    Customer newCustomer = new Customer(customerName, "");
-                    newCustomer.addParcel(newParcel);
-                    customerQueue.addCustomer(newCustomer);
-
-                    // Save to CSV files
-                    saveAllParcelsToFile();
-                    saveAllCustomersToFile();
-
-                    // Refresh tables
-                    loadParcelTable();
-                    loadCustomerTable();
-
-                    JOptionPane.showMessageDialog(null, "Parcel and Customer added successfully!");
-                    addFrame.dispose();
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Please enter valid numeric values for weight, days, and dimensions.");
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(null, "Error adding parcel and customer: " + ex.getMessage());
+                if (parcelID.isEmpty() || customerName.isEmpty()) {
+                    JOptionPane.showMessageDialog(null, "Parcel ID and Customer Name cannot be empty.");
+                    return;
                 }
+
+                // Create new parcel and customer
+                Parcel newParcel = new Parcel(parcelID, weight, daysInDepot, length, width, height);
+                parcelMap.addParcel(newParcel);
+
+                Customer newCustomer = new Customer(customerName, "");
+                newCustomer.addParcel(newParcel);
+                customerQueue.addCustomer(newCustomer);
+
+                // Save data and refresh views
+                saveAllParcelsToFile();
+                saveAllCustomersToFile();
+                parcelView.refresh();
+                customerView.refresh();
+
+                JOptionPane.showMessageDialog(null, "Parcel and Customer added successfully!");
+                addFrame.dispose();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, "Error: " + ex.getMessage());
             }
         });
 
@@ -260,6 +212,7 @@ public class Manager {
         addFrame.add(panel);
         addFrame.setVisible(true);
     }
+
 
     private void saveAllParcelsToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("Parcels.csv"))) {
